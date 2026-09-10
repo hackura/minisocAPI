@@ -4,4 +4,4 @@ router = APIRouter()
 
 @router.get("/health")
 def health_check():
-    return {"status": "ok", "service": "minisoc-api"}
+    return {"status": "ok", "service": "minisoc-api", "version": "1.0.0"}
