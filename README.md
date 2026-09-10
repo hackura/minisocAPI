@@ -7,7 +7,10 @@ MiniSOC is a portfolio-grade blue-team project that demonstrates security event 
 ## Architecture
 
 ```text
-Security source / script
+Windows Event Log
+        |
+        v
+PowerShell Collector
         |
         v
   POST /api/v1/events
@@ -31,6 +34,7 @@ Security source / script
 ## Features
 
 - Security event ingestion
+- Windows Security Event Log collector
 - Failed-login and brute-force detection
 - Risk scoring and severity classification
 - SOC alert generation
@@ -130,6 +134,13 @@ curl -X POST "http://127.0.0.1:8000/api/v1/events" \
   }'
 ```
 
+### View events
+
+```bash
+curl "http://127.0.0.1:8000/api/v1/events?limit=20" \
+  -H "X-API-Key: dev-minisoc-key"
+```
+
 ### View alerts
 
 ```bash
@@ -148,6 +159,40 @@ GET /api/v1/events?severity=critical&limit=20
 ```text
 GET /api/v1/alerts?severity=critical&status=open
 ```
+
+## Windows log collector
+
+MiniSOC includes a PowerShell collector at `collector/windows_collector.ps1`.
+
+The collector reads recent Windows **Security** event logs and converts selected Windows events into the normalized MiniSOC event format.
+
+Currently:
+
+- Event ID `4625` → `failed_login`
+- Event ID `4624` → `successful_login`
+- Other Security events → `windows_security_event`
+
+### Run the collector
+
+Start MiniSOC first, then in an elevated PowerShell window:
+
+```powershell
+$env:MINISOC_API_KEY="dev-minisoc-key"
+Set-ExecutionPolicy -Scope Process Bypass
+.\collector\windows_collector.ps1
+```
+
+Optional parameters:
+
+```powershell
+.\collector\windows_collector.ps1 `
+  -ApiUrl "http://127.0.0.1:8000/api/v1/events" `
+  -ApiKey "dev-minisoc-key" `
+  -MaxEvents 50 `
+  -HoursBack 2
+```
+
+The collector is intended for a controlled lab environment. Windows Security log access may require administrator privileges and appropriate local audit policy configuration.
 
 ## API endpoints
 
@@ -182,11 +227,11 @@ docker compose up --build
 
 ## Example integration
 
-MiniSOC can eventually receive events from Linux authentication logs, Windows event collectors, endpoint scripts, network sensors, or another application. A simple collector only needs to send normalized JSON to `POST /api/v1/events` with the API key.
+MiniSOC can receive events from Windows event collectors, Linux authentication logs, endpoint scripts, network sensors, or another application. A collector only needs to send normalized JSON to `POST /api/v1/events` with the API key.
 
 ## Project status
 
-🚧 Active development. The current release is the secure API foundation; future milestones include JWT/RBAC, richer detection rules, IP reputation enrichment, persistent rule configuration, dashboards, PostgreSQL deployment, and production observability.
+🚧 Active development. The current release is the secure API foundation plus a Windows Security Event Log collector; future milestones include JWT/RBAC, richer detection rules, IP reputation enrichment, persistent rule configuration, dashboards, PostgreSQL deployment, and production observability.
 
 ## License
 
