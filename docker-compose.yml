@@ -1,0 +1,10 @@
+services:
+  minisoc-api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - minisoc-data:/app
+
+volumes:
+  minisoc-data:
